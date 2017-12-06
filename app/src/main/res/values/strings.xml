@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">GraphTest</string>
+    <string name="add">Add</string>
+    <string name="reset">Reset</string>
+    <string name="x">x:</string>
+    <string name="y">y:</string>
+    <string name="graph_title">My Graph</string>
+</resources>
