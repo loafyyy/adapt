@@ -1,10 +1,13 @@
 package com.example.jackie.graphtest;
 
 import android.Manifest;
-import android.content.Context;
-import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -32,12 +35,13 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     // Views
-    EditText xEntry;
-    EditText yEntry;
-    Button addButton;
-    Button resetButton;
-    GraphView graph;
+    private EditText xEntry;
+    private EditText yEntry;
+    private Button addButton;
+    private Button resetButton;
+    private GraphView graph;
 
+<<<<<<< HEAD
     EditText etMessage;
     EditText etTelNr;
     Button smsButton;
@@ -54,6 +58,16 @@ public class MainActivity extends AppCompatActivity {
     String DELIVERED = "SMS_DELIVERED";
     PendingIntent sentPI, deliveredPI;
     BroadcastReceiver smsSentReceiver, smsDeliveredReceiver;
+=======
+    private PointsGraphSeries<Point> series = new PointsGraphSeries<>();
+    private List<Point> data = new LinkedList<>();
+
+    private String errorMessage = "entry must be numeric";
+    private Context mContext;
+
+    // high glucose level - user will get notification
+    private double glucoseHigh = 130;
+>>>>>>> origin/master
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,6 +122,11 @@ public class MainActivity extends AppCompatActivity {
                 series.resetData(dataArr);
                 xEntry.setText("");
                 yEntry.setText("");
+
+                // create notification if glucose is too high
+                if (y >= glucoseHigh) {
+                    createNotification();
+                }
             }
         });
 
@@ -149,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
         // set x and y axis size
         graph.getViewport().setYAxisBoundsManual(true);
         graph.getViewport().setMinY(0);
-        graph.getViewport().setMaxY(10);
+        graph.getViewport().setMaxY(150);
 
         graph.getViewport().setXAxisBoundsManual(true);
         graph.getViewport().setMinX(0);
@@ -158,7 +177,39 @@ public class MainActivity extends AppCompatActivity {
         // enable scaling and scrolling
         graph.getViewport().setScalable(true);
         graph.getViewport().setScalableY(true);
+    }
 
+    // notification for when glucose is too high
+    private void createNotification() {
+
+        // create notification
+        Notification.Builder mBuilder =
+                new Notification.Builder(this)
+                        .setSmallIcon(R.drawable.error)
+                        .setContentTitle(getResources().getString(R.string.notification_title))
+                        .setContentText(getResources().getString(R.string.notification_message));
+
+        // add vibration
+        mBuilder.setVibrate(new long[]{1000, 1000, 1000, 1000, 1000});
+
+        // opening notification goes to MainActivity
+        Intent intent = new Intent(this, MainActivity.class);
+
+        PendingIntent pendingIntent =
+                PendingIntent.getActivity(
+                        this,
+                        0,
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+
+        // associate notification builder with pending intent
+        mBuilder.setContentIntent(pendingIntent);
+
+        // build notification
+        int mNotificationId = 1;
+        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        notificationManager.notify(mNotificationId, mBuilder.build());
     }
 
     @Override
