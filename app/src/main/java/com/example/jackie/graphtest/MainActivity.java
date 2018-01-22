@@ -16,9 +16,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.helper.DateAsXAxisLabelFormatter;
+import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.PointsGraphSeries;
 
+import java.text.DateFormat;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -31,8 +36,8 @@ public class MainActivity extends AppCompatActivity {
     private Button resetButton;
     private GraphView graph;
 
-    private PointsGraphSeries<Point> series = new PointsGraphSeries<>();
-    private List<Point> data = new LinkedList<>();
+    private PointsGraphSeries<DataPoint> series = new PointsGraphSeries<>();
+    private List<DataPoint> data = new LinkedList<>();
 
     private String errorMessage = "entry must be numeric";
     private Context mContext;
@@ -49,25 +54,19 @@ public class MainActivity extends AppCompatActivity {
 
         // find the views
         graph = (GraphView) findViewById(R.id.graph_view);
-        xEntry = (EditText) findViewById(R.id.x_entry);
-        setCloseEditTextOnEnter(xEntry);
         yEntry = (EditText) findViewById(R.id.y_entry);
         setCloseEditTextOnEnter(yEntry);
         addButton = (Button) findViewById(R.id.add_button);
 
         // handle adding new data points
+        final Calendar calendar = Calendar.getInstance();
+
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
                 // get x and y values from edit text
-                double x;
-                try {
-                    x = Double.parseDouble(xEntry.getText().toString());
-                } catch (NumberFormatException e) {
-                    Toast.makeText(mContext, errorMessage, Toast.LENGTH_SHORT).show();
-                    return;
-                }
+                Date x = calendar.getTime();
                 double y;
                 try {
                     y = Double.parseDouble(yEntry.getText().toString());
@@ -76,20 +75,20 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
 
-                data.add(new Point(x, y));
-                Point[] dataArr = new Point[data.size()];
+                data.add(new DataPoint(x, y));
+                DataPoint[] dataArr = new DataPoint[data.size()];
                 dataArr = data.toArray(dataArr);
-                if (dataArr.length > 1) {
-                    Arrays.sort(dataArr);
-                }
+//                if (dataArr.length > 1) {
+//                    Arrays.sort(dataArr);
+//                }
                 series.resetData(dataArr);
-                xEntry.setText("");
                 yEntry.setText("");
 
                 // create notification if glucose is too high
                 if (y >= glucoseHigh) {
                     createNotification();
                 }
+
             }
         });
 
@@ -98,9 +97,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 // reset data with empty array
-                series.resetData(new Point[0]);
+                series.resetData(new DataPoint[0]);
                 data.clear();
-                xEntry.setText("");
                 yEntry.setText("");
             }
         });
@@ -110,18 +108,20 @@ public class MainActivity extends AppCompatActivity {
 
 
         // FORMATTING
+        final DateFormat dateTimeFormatter = DateFormat.getDateTimeInstance();
+        graph.getGridLabelRenderer().setLabelFormatter(new DateAsXAxisLabelFormatter(mContext));
+
 
         // set x and y axis size
         graph.getViewport().setYAxisBoundsManual(true);
         graph.getViewport().setMinY(0);
         graph.getViewport().setMaxY(150);
 
-        graph.getViewport().setXAxisBoundsManual(true);
-        graph.getViewport().setMinX(0);
-        graph.getViewport().setMaxX(10);
+        graph.getViewport().setXAxisBoundsManual(false);
+//        graph.getViewport().setMinX(0);
+//        graph.getViewport().setMaxX(10);
 
         // enable scaling and scrolling
-        graph.getViewport().setScalable(true);
         graph.getViewport().setScalableY(true);
     }
 

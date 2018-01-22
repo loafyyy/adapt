@@ -3,7 +3,7 @@
     <string name="add">Add</string>
     <string name="reset">Reset</string>
     <string name="x">x:</string>
-    <string name="y">y:</string>
+    <string name="y">Glucose:</string>
     <string name="graph_title">My Graph</string>
     <string name="notification_title">Alert</string>
     <string name="notification_message">High glucose levels</string>
