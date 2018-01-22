@@ -76,4 +76,49 @@
 
     </LinearLayout>
 
+    <ToggleButton
+        android:id="@+id/toggleButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="116dp"
+        android:text="ToggleButton" />
+
+    <EditText
+        android:id="@+id/etTelNr"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="13dp"
+        android:ems="10"
+        android:inputType="phone"
+        android:text="Phone #" />
+
+    <EditText
+        android:id="@+id/etMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/etTelNr"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:ems="10"
+        android:inputType="textShortMessage"
+        android:text="Write a message!" />
+
+    <Button
+        android:id="@+id/sendSMS"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/etMessage"
+        android:layout_marginLeft="18dp"
+        android:layout_marginStart="18dp"
+        android:layout_marginTop="15dp"
+        android:layout_toEndOf="@+id/graph_title"
+        android:layout_toRightOf="@+id/graph_title"
+        android:text="Send Message" />
+
 </RelativeLayout>
