@@ -30,7 +30,6 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     // Views
-    private EditText xEntry;
     private EditText yEntry;
     private Button addButton;
     private Button resetButton;
@@ -54,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
 
         // find the views
         graph = (GraphView) findViewById(R.id.graph_view);
+        //initGraph(graph);
         yEntry = (EditText) findViewById(R.id.y_entry);
         setCloseEditTextOnEnter(yEntry);
         addButton = (Button) findViewById(R.id.add_button);
