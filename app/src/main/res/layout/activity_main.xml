@@ -9,7 +9,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:text="@string/graph_title"
+        android:text="@string/main_title"
         android:textSize="20sp" />
 
     <com.jjoe64.graphview.GraphView
@@ -44,6 +44,11 @@
             android:inputType="phone"
             android:maxLength="4" />
 
+        <Space
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="20dp" />
+
         <Button
             android:id="@+id/add_button"
             android:layout_width="wrap_content"
@@ -54,8 +59,7 @@
             android:id="@+id/reset_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
             android:text="@string/reset" />
-
     </LinearLayout>
-
 </RelativeLayout>

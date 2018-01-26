@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.KeyEvent;
@@ -18,12 +19,15 @@ import android.widget.Toast;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.helper.DateAsXAxisLabelFormatter;
 import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.LineGraphSeries;
 import com.jjoe64.graphview.series.PointsGraphSeries;
 
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -35,14 +39,11 @@ public class MainActivity extends AppCompatActivity {
     private Button resetButton;
     private GraphView graph;
 
-    private PointsGraphSeries<DataPoint> series = new PointsGraphSeries<>();
+    private LineGraphSeries<DataPoint> series = new LineGraphSeries<>();
     private List<DataPoint> data = new LinkedList<>();
 
     private String errorMessage = "entry must be numeric";
     private Context mContext;
-
-    // high glucose level - user will get notification
-    private double glucoseHigh = 130;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,20 +54,31 @@ public class MainActivity extends AppCompatActivity {
 
         // find the views
         graph = (GraphView) findViewById(R.id.graph_view);
-        //initGraph(graph);
         yEntry = (EditText) findViewById(R.id.y_entry);
-        setCloseEditTextOnEnter(yEntry);
         addButton = (Button) findViewById(R.id.add_button);
 
-        // handle adding new data points
-        final Calendar calendar = Calendar.getInstance();
+        // set parameters for views
+        setCloseEditTextOnEnter(yEntry);
+
+        // create boundaries for graph
+        final Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+
+        Date min = cal.getTime();
+        cal.add(Calendar.DAY_OF_MONTH, 1);
+        Date max = cal.getTime();
 
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // get x value as a date
+                Calendar curr = Calendar.getInstance();
+                Date x = curr.getTime();
 
-                // get x and y values from edit text
-                Date x = calendar.getTime();
+                // get y value
                 double y;
                 try {
                     y = Double.parseDouble(yEntry.getText().toString());
@@ -75,19 +87,12 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
 
+                //add data point
                 data.add(new DataPoint(x, y));
                 DataPoint[] dataArr = new DataPoint[data.size()];
                 dataArr = data.toArray(dataArr);
-//                if (dataArr.length > 1) {
-//                    Arrays.sort(dataArr);
-//                }
                 series.resetData(dataArr);
                 yEntry.setText("");
-
-                // create notification if glucose is too high
-                if (y >= glucoseHigh) {
-                    createNotification();
-                }
 
             }
         });
@@ -106,56 +111,32 @@ public class MainActivity extends AppCompatActivity {
         // add series to the graph
         graph.addSeries(series);
 
+        // format series appearance
+        series.setColor(Color.rgb(84, 199, 128));
+        series.setDrawDataPoints(true);
+        series.setDataPointsRadius(5);
+        series.setDrawBackground(true);
+        series.setBackgroundColor(Color.argb(127, 101, 240, 154));
 
-        // FORMATTING
-        final DateFormat dateTimeFormatter = DateFormat.getDateTimeInstance();
-        graph.getGridLabelRenderer().setLabelFormatter(new DateAsXAxisLabelFormatter(mContext));
-
+        // format graph labels
+        SimpleDateFormat hourFormat = new SimpleDateFormat("hh a");
+        graph.getGridLabelRenderer().setLabelFormatter(
+                new DateAsXAxisLabelFormatter(graph.getContext(), hourFormat));
+        graph.getGridLabelRenderer().setNumHorizontalLabels(4);
+        graph.setTitle("Blood Glucose Levels");
 
         // set x and y axis size
         graph.getViewport().setYAxisBoundsManual(true);
         graph.getViewport().setMinY(0);
         graph.getViewport().setMaxY(150);
 
-        graph.getViewport().setXAxisBoundsManual(false);
-//        graph.getViewport().setMinX(0);
-//        graph.getViewport().setMaxX(10);
+        graph.getViewport().setXAxisBoundsManual(true);
+        graph.getViewport().setMinX(min.getTime());
+        graph.getViewport().setMaxX(max.getTime());
 
         // enable scaling and scrolling
         graph.getViewport().setScalableY(true);
-    }
-
-    // notification for when glucose is too high
-    private void createNotification() {
-
-        // create notification
-        Notification.Builder mBuilder =
-                new Notification.Builder(this)
-                        .setSmallIcon(R.drawable.error)
-                        .setContentTitle(getResources().getString(R.string.notification_title))
-                        .setContentText(getResources().getString(R.string.notification_message));
-
-        // add vibration
-        mBuilder.setVibrate(new long[]{1000, 1000, 1000, 1000, 1000});
-
-        // opening notification goes to MainActivity
-        Intent intent = new Intent(this, MainActivity.class);
-
-        PendingIntent pendingIntent =
-                PendingIntent.getActivity(
-                        this,
-                        0,
-                        intent,
-                        PendingIntent.FLAG_UPDATE_CURRENT
-                );
-
-        // associate notification builder with pending intent
-        mBuilder.setContentIntent(pendingIntent);
-
-        // build notification
-        int mNotificationId = 1;
-        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        notificationManager.notify(mNotificationId, mBuilder.build());
+        graph.getGridLabelRenderer().setHumanRounding(false);
     }
 
     // allows keyboard to close when enter is pressed
