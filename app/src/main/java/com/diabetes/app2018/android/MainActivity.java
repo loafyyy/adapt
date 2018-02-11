@@ -1,4 +1,4 @@
-package com.example.jackie.graphtest;
+package com.diabetes.app2018.android;
 
 import android.Manifest;
 import android.app.Activity;
@@ -23,6 +23,9 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.jackie.android.R;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.PointsGraphSeries;
 
@@ -38,6 +41,8 @@ public class MainActivity extends AppCompatActivity {
     private Button addButton;
     private Button resetButton;
     private GraphView graph;
+
+    private String username;
 
     EditText etMessage;
     EditText etTelNr;
@@ -59,11 +64,16 @@ public class MainActivity extends AppCompatActivity {
     // high glucose level - user will get notification
     private double glucoseHigh = 130;
 
+    private DatabaseReference database;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        database = FirebaseDatabase.getInstance().getReference();
+        username = "Penn";
 
         mContext = this;
         final Activity activity = (Activity) mContext;
@@ -105,6 +115,8 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 data.add(new Point(x, y));
+                database.child("users").child(username).setValue(x + ", " + y);
+
                 Point[] dataArr = new Point[data.size()];
                 dataArr = data.toArray(dataArr);
                 if (dataArr.length > 1) {
