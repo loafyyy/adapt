@@ -1,4 +1,4 @@
-package com.example.jackie.graphtest;
+package com.diabetes.app2018.android;
 
 import android.Manifest;
 import android.app.Activity;
@@ -23,6 +23,9 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.PointsGraphSeries;
 
@@ -38,32 +41,38 @@ public class MainActivity extends AppCompatActivity {
     private Button addButton;
     private Button resetButton;
     private GraphView graph;
+    private EditText etMessage;
+    private EditText etTelNr;
+    private Button smsButton;
+    private Button signOutButton;
 
-    EditText etMessage;
-    EditText etTelNr;
-    Button smsButton;
-
+    // SMS
     int MY_PERMISSIONS_REQUEST_SEND_SMS = 1;
+    private String SENT = "SMS_SENT";
+    private String DELIVERED = "SMS_DELIVERED";
+    private PendingIntent sentPI, deliveredPI;
+    private BroadcastReceiver smsSentReceiver, smsDeliveredReceiver;
 
-    String SENT = "SMS_SENT";
-    String DELIVERED = "SMS_DELIVERED";
-    PendingIntent sentPI, deliveredPI;
-    BroadcastReceiver smsSentReceiver, smsDeliveredReceiver;
-
+    // Graph
     private PointsGraphSeries<Point> series = new PointsGraphSeries<>();
     private List<Point> data = new LinkedList<>();
+    // high glucose level - user will get notification
+    private double glucoseHigh = 130;
 
     private String errorMessage = "entry must be numeric";
     private Context mContext;
 
-    // high glucose level - user will get notification
-    private double glucoseHigh = 130;
-
+    // Firebase
+    private DatabaseReference database;
+    private String username;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        database = FirebaseDatabase.getInstance().getReference();
+        username = "Penn";
 
         mContext = this;
         final Activity activity = (Activity) mContext;
@@ -76,6 +85,15 @@ public class MainActivity extends AppCompatActivity {
         setCloseEditTextOnEnter(yEntry);
         addButton = (Button) findViewById(R.id.add_button);
         smsButton = (Button) findViewById(R.id.sendSMS);
+        signOutButton = (Button) findViewById(R.id.sign_out_button);
+        signOutButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                FirebaseAuth.getInstance().signOut();
+                Intent intent = new Intent(mContext, LoginActivity.class);
+                startActivity(intent);
+            }
+        });
 
         etMessage = (EditText) findViewById(R.id.etMessage);
         etTelNr = (EditText) findViewById(R.id.etTelNr);
@@ -105,6 +123,8 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 data.add(new Point(x, y));
+                database.child("users").child(username).setValue(x + ", " + y);
+
                 Point[] dataArr = new Point[data.size()];
                 dataArr = data.toArray(dataArr);
                 if (dataArr.length > 1) {

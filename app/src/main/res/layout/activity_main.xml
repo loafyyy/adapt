@@ -76,15 +76,15 @@
 
     </LinearLayout>
 
-    <ToggleButton
-        android:id="@+id/toggleButton"
+    <Button
+        android:id="@+id/sign_out_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_marginBottom="116dp"
-        android:text="ToggleButton" />
+        android:text="Sign Out" />
 
     <EditText
         android:id="@+id/etTelNr"
