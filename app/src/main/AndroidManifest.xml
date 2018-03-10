@@ -29,6 +29,10 @@
             android:launchMode="singleTop"
             android:screenOrientation="portrait">
         </activity>
+
+        <service
+            android:name=".PedometerService"
+            android:exported="false" />
     </application>
 
 </manifest>

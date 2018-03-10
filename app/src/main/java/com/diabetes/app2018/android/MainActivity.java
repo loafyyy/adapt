@@ -1,17 +1,18 @@
 package com.diabetes.app2018.android;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -30,7 +31,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener, StepListener {
+public class MainActivity extends AppCompatActivity {
 
     // Views
     private EditText xEntry;
@@ -42,6 +43,30 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private Button signOutButton;
     private TextView stepsTV;
     private Button stepsButton;
+
+    // BroadcastReceiver for PedometerService
+    public static final String RECEIVE_SERVICE = "com.diabetes.app2018.android.RECEIVE_SERVICE";
+    private BroadcastReceiver bReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(RECEIVE_SERVICE)) {
+                int numSteps = intent.getIntExtra("numSteps", -1);
+                stepsTV.setText(String.valueOf(numSteps));
+            }
+        }
+    };
+    private LocalBroadcastManager bManager;
+    private boolean pedometerRunning = false;
+
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     // graphing
     private PointsGraphSeries<Point> series = new PointsGraphSeries<>();
@@ -56,23 +81,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private DatabaseReference database;
     private String username;
 
-    // Pedometer/sensor
-    private SensorManager sensorManager;
-    private Sensor accelerometer;
-    private StepDetector stepDetector;
-    private boolean pedometerRunning = false;
-    private int numSteps;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // sensor
-        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        stepDetector = new StepDetector();
-        stepDetector.registerListener(this);
+        // set up broadcast receiver
+        bManager = LocalBroadcastManager.getInstance(this);
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(RECEIVE_SERVICE);
+        bManager.registerReceiver(bReceiver, intentFilter);
 
         database = FirebaseDatabase.getInstance().getReference();
         username = "Penn";
@@ -83,23 +102,30 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         // find the views
         stepsTV = (TextView) findViewById(R.id.steps_tv);
         stepsButton = (Button) findViewById(R.id.steps_button);
-        graph = (GraphView) findViewById(R.id.graph_view);
-        xEntry = (EditText) findViewById(R.id.x_entry);
-        setCloseEditTextOnEnter(xEntry);
-        yEntry = (EditText) findViewById(R.id.y_entry);
-        setCloseEditTextOnEnter(yEntry);
         stepsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (!pedometerRunning) {
                     startPedometer();
+                    pedometerRunning = true;
                     stepsButton.setText("Stop Steps");
                 } else {
                     stopPedometer();
+                    pedometerRunning = false;
                     stepsButton.setText("Start Steps");
                 }
             }
         });
+        if (isMyServiceRunning(PedometerService.class)) {
+            Log.i("MainActivity", "PedometerService is running");
+            pedometerRunning = true;
+            stepsButton.setText("Stop Steps");
+        }
+        graph = (GraphView) findViewById(R.id.graph_view);
+        xEntry = (EditText) findViewById(R.id.x_entry);
+        setCloseEditTextOnEnter(xEntry);
+        yEntry = (EditText) findViewById(R.id.y_entry);
+        setCloseEditTextOnEnter(yEntry);
         addButton = (Button) findViewById(R.id.add_button);
         settingsButton = (Button) findViewById(R.id.settings_button);
         signOutButton = (Button) findViewById(R.id.sign_out_button);
@@ -191,6 +217,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         graph.getViewport().setScalableY(true);
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        //bManager.unregisterReceiver(bReceiver);
+    }
+
     // notification for when glucose is too high
     private void createNotification() {
 
@@ -241,31 +273,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void startPedometer() {
-        numSteps = 0;
-        sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST);
-        pedometerRunning = true;
+        Intent intent = new Intent(this, PedometerService.class);
+        startService(intent);
     }
 
     private void stopPedometer() {
-        sensorManager.unregisterListener(this);
-        pedometerRunning = false;
-    }
-
-    @Override
-    public void onSensorChanged(SensorEvent sensorEvent) {
-        if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            stepDetector.updateAccel(sensorEvent.timestamp, sensorEvent.values[0], sensorEvent.values[1], sensorEvent.values[2]);
-        }
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int i) {
-
-    }
-
-    @Override
-    public void step(long timeNs) {
-        numSteps++;
-        stepsTV.setText(String.valueOf(numSteps));
+        Intent intent = new Intent(this, PedometerService.class);
+        stopService(intent);
+        // todo save number of steps
     }
 }
