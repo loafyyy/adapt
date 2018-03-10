@@ -6,6 +6,10 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.KeyEvent;
@@ -26,9 +30,9 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SensorEventListener, StepListener {
 
-    // View
+    // Views
     private EditText xEntry;
     private EditText yEntry;
     private Button addButton;
@@ -36,7 +40,10 @@ public class MainActivity extends AppCompatActivity {
     private Button settingsButton;
     private GraphView graph;
     private Button signOutButton;
+    private TextView stepsTV;
+    private Button stepsButton;
 
+    // graphing
     private PointsGraphSeries<Point> series = new PointsGraphSeries<>();
     private List<Point> data = new LinkedList<>();
     // high glucose level - user will get notification
@@ -49,10 +56,23 @@ public class MainActivity extends AppCompatActivity {
     private DatabaseReference database;
     private String username;
 
+    // Pedometer/sensor
+    private SensorManager sensorManager;
+    private Sensor accelerometer;
+    private StepDetector stepDetector;
+    private boolean pedometerRunning = false;
+    private int numSteps;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // sensor
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        stepDetector = new StepDetector();
+        stepDetector.registerListener(this);
 
         database = FirebaseDatabase.getInstance().getReference();
         username = "Penn";
@@ -61,11 +81,25 @@ public class MainActivity extends AppCompatActivity {
         final Activity activity = (Activity) mContext;
 
         // find the views
+        stepsTV = (TextView) findViewById(R.id.steps_tv);
+        stepsButton = (Button) findViewById(R.id.steps_button);
         graph = (GraphView) findViewById(R.id.graph_view);
         xEntry = (EditText) findViewById(R.id.x_entry);
         setCloseEditTextOnEnter(xEntry);
         yEntry = (EditText) findViewById(R.id.y_entry);
         setCloseEditTextOnEnter(yEntry);
+        stepsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (!pedometerRunning) {
+                    startPedometer();
+                    stepsButton.setText("Stop Steps");
+                } else {
+                    stopPedometer();
+                    stepsButton.setText("Start Steps");
+                }
+            }
+        });
         addButton = (Button) findViewById(R.id.add_button);
         settingsButton = (Button) findViewById(R.id.settings_button);
         signOutButton = (Button) findViewById(R.id.sign_out_button);
@@ -204,5 +238,34 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
         });
+    }
+
+    private void startPedometer() {
+        numSteps = 0;
+        sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+        pedometerRunning = true;
+    }
+
+    private void stopPedometer() {
+        sensorManager.unregisterListener(this);
+        pedometerRunning = false;
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent sensorEvent) {
+        if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            stepDetector.updateAccel(sensorEvent.timestamp, sensorEvent.values[0], sensorEvent.values[1], sensorEvent.values[2]);
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {
+
+    }
+
+    @Override
+    public void step(long timeNs) {
+        numSteps++;
+        stepsTV.setText(String.valueOf(numSteps));
     }
 }
