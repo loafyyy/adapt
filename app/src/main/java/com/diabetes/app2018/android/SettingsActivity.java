@@ -1,4 +1,4 @@
-package com.example.jackie.graphtest;
+package com.diabetes.app2018.android;
 
 import android.Manifest;
 import android.app.Activity;

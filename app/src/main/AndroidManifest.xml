@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.jackie.graphtest">
+    package="com.diabetes.app2018.android">
 
     <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.VIBRATE" />
@@ -13,7 +13,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".MainActivity"
+            android:name="com.diabetes.app2018.android.MainActivity"
             android:launchMode="singleTop"
             android:screenOrientation="portrait">
             <intent-filter>
@@ -22,7 +22,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".SettingsActivity"></activity>
+        <activity
+            android:name="com.diabetes.app2018.android.SettingsActivity"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>
