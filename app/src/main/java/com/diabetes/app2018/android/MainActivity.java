@@ -16,6 +16,9 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.PointsGraphSeries;
 
@@ -25,7 +28,6 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-
     // View
     private EditText xEntry;
     private EditText yEntry;
@@ -33,21 +35,27 @@ public class MainActivity extends AppCompatActivity {
     private Button resetButton;
     private Button settingsButton;
     private GraphView graph;
+    private Button signOutButton;
 
     private PointsGraphSeries<Point> series = new PointsGraphSeries<>();
     private List<Point> data = new LinkedList<>();
+    // high glucose level - user will get notification
+    private double glucoseHigh = 130;
 
     private String errorMessage = "entry must be numeric";
     private Context mContext;
 
-    // high glucose level - user will get notification
-    private double glucoseHigh = 130;
-
+    // Firebase
+    private DatabaseReference database;
+    private String username;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        database = FirebaseDatabase.getInstance().getReference();
+        username = "Penn";
 
         mContext = this;
         final Activity activity = (Activity) mContext;
@@ -60,6 +68,15 @@ public class MainActivity extends AppCompatActivity {
         setCloseEditTextOnEnter(yEntry);
         addButton = (Button) findViewById(R.id.add_button);
         settingsButton = (Button) findViewById(R.id.settings_button);
+        signOutButton = (Button) findViewById(R.id.sign_out_button);
+        signOutButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                FirebaseAuth.getInstance().signOut();
+                Intent intent = new Intent(mContext, LoginActivity.class);
+                startActivity(intent);
+            }
+        });
 
         settingsButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -91,6 +108,8 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 data.add(new Point(x, y));
+                database.child("users").child(username).setValue(x + ", " + y);
+
                 Point[] dataArr = new Point[data.size()];
                 dataArr = data.toArray(dataArr);
                 if (dataArr.length > 1) {
@@ -124,7 +143,6 @@ public class MainActivity extends AppCompatActivity {
 
 
         // FORMATTING
-
         // set x and y axis size
         graph.getViewport().setYAxisBoundsManual(true);
         graph.getViewport().setMinY(0);

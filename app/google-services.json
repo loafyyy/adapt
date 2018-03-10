@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "434396382249",
+    "firebase_url": "https://adapt-diabetes-app.firebaseio.com",
+    "project_id": "adapt-diabetes-app",
+    "storage_bucket": "adapt-diabetes-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:434396382249:android:c688f93149c46a92",
+        "android_client_info": {
+          "package_name": "com.diabetes.app2018.android"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "434396382249-qn8qjlubdnoom4vt8a1707dodb4askkq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAoDXX8BjH6n9mMDS3-Han2M0cLm_R-wEM"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
