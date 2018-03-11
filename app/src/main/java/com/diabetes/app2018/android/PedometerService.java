@@ -11,7 +11,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 import android.widget.Toast;
 
 /**
@@ -32,9 +31,6 @@ public class PedometerService extends Service implements SensorEventListener, St
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.i("PedometerService", "onCreate");
-        Toast.makeText(this, "onCreate", Toast.LENGTH_SHORT).show();
-
         // sensor
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -50,8 +46,7 @@ public class PedometerService extends Service implements SensorEventListener, St
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i("PedometerService", "onStartCommand");
-        Toast.makeText(this, "onStart", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Pedometer Started", Toast.LENGTH_SHORT).show();
         sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST);
         pedometerRunning = true;
         startForeground(NOTIFICATION_ID, createNotification());
@@ -61,8 +56,7 @@ public class PedometerService extends Service implements SensorEventListener, St
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.i("PedometerService", "onDestroy");
-        Toast.makeText(this, "onDestroy", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Pedometer Stopped", Toast.LENGTH_SHORT).show();
         sensorManager.unregisterListener(this);
         pedometerRunning = false;
     }
@@ -73,7 +67,7 @@ public class PedometerService extends Service implements SensorEventListener, St
             stepDetector.updateAccel(sensorEvent.timestamp, sensorEvent.values[0], sensorEvent.values[1], sensorEvent.values[2]);
 
             // send broadcast with updated numSteps
-            Intent intent = new Intent(MainActivity.RECEIVE_SERVICE);
+            Intent intent = new Intent(MainFragment.RECEIVE_SERVICE);
             intent.putExtra("numSteps", numSteps);
             LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
         }

@@ -8,4 +8,12 @@
     <string name="notification_title">Alert</string>
     <string name="notification_message">High glucose levels</string>
     <string name="title_activity_login">LoginActivity</string>
+    <string-array name="drawer_pages_array">
+        <item>Home</item>
+        <item>Achievements</item>
+        <item>Settings</item>
+        <item>Logout</item>
+    </string-array>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
 </resources>

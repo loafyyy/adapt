@@ -22,9 +22,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.diabetes.app2018.android.SettingsActivity"
-            android:screenOrientation="portrait" />
-        <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"
             android:screenOrientation="portrait">
