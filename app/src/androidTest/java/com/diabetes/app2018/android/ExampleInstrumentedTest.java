@@ -1,4 +1,4 @@
-package com.example.jackie.graphtest;
+package com.diabetes.app2018.graphtest;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

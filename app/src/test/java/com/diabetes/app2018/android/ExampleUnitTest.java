@@ -1,4 +1,4 @@
-package com.example.jackie.graphtest;
+package com.diabetes.app2018.graphtest;
 
 import org.junit.Test;
 
