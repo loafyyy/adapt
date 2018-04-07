@@ -8,25 +8,36 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.jjoe64.graphview.DefaultLabelFormatter;
 import com.jjoe64.graphview.GraphView;
-import com.jjoe64.graphview.series.PointsGraphSeries;
+import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.LineGraphSeries;
 
-import java.util.Arrays;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -41,6 +52,7 @@ public class MainFragment extends Fragment {
     private GraphView graph;
     private TextView stepsTV;
     private Button stepsButton;
+    private Spinner timeSpinner;
 
     // BroadcastReceiver for PedometerService
     public static final String RECEIVE_SERVICE = "com.diabetes.app2018.android.RECEIVE_SERVICE";
@@ -67,8 +79,8 @@ public class MainFragment extends Fragment {
     }
 
     // graphing
-    private PointsGraphSeries<Point> series = new PointsGraphSeries<>();
-    private List<Point> data = new LinkedList<>();
+    private LineGraphSeries<DataPoint> series = new LineGraphSeries<>();
+    private List<DataPoint> data = new LinkedList<>();
     // high glucose level - user will get notification
     private double glucoseHigh = 130;
     private String errorMessage = "entry must be numeric";
@@ -129,6 +141,8 @@ public class MainFragment extends Fragment {
             pedometerRunning = true;
             stepsButton.setText("Stop Steps");
         }
+
+        timeSpinner = (Spinner) view.findViewById(R.id.time_spinner);
         graph = (GraphView) view.findViewById(R.id.graph_view);
         xEntry = (EditText) view.findViewById(R.id.x_entry);
         setCloseEditTextOnEnter(xEntry);
@@ -142,13 +156,20 @@ public class MainFragment extends Fragment {
             public void onClick(View view) {
 
                 // get x and y values from edit text
+                /* todo: custom x/time values
                 double x;
                 try {
                     x = Double.parseDouble(xEntry.getText().toString());
                 } catch (NumberFormatException e) {
                     Toast.makeText(mContext, errorMessage, Toast.LENGTH_SHORT).show();
                     return;
-                }
+                }*/
+
+                // get x value as a date
+                Calendar curr = Calendar.getInstance();
+                Date x = curr.getTime();
+
+                // get y value
                 double y;
                 try {
                     y = Double.parseDouble(yEntry.getText().toString());
@@ -157,16 +178,11 @@ public class MainFragment extends Fragment {
                     return;
                 }
 
-                data.add(new Point(x, y));
-                database.child("users").child(username).setValue(x + ", " + y);
-
-                Point[] dataArr = new Point[data.size()];
+                // add data point to graph
+                data.add(new DataPoint(x, y));
+                DataPoint[] dataArr = new DataPoint[data.size()];
                 dataArr = data.toArray(dataArr);
-                if (dataArr.length > 1) {
-                    Arrays.sort(dataArr);
-                }
                 series.resetData(dataArr);
-                xEntry.setText("");
                 yEntry.setText("");
 
                 // create notification if glucose is too high
@@ -188,23 +204,156 @@ public class MainFragment extends Fragment {
             }
         });
 
+        // time spinner
+        List<String> spinnerOptions = new ArrayList<>();
+        spinnerOptions.add("Day");
+        spinnerOptions.add("Week");
+        spinnerOptions.add("Month");
+        ArrayAdapter<CharSequence> adapter = new ArrayAdapter(mContext, android.R.layout.simple_spinner_item, spinnerOptions);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        timeSpinner.setAdapter(adapter);
+        timeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+
+                final Calendar cal = Calendar.getInstance();
+                Date min;
+                Date max;
+
+                // day view
+                if (i == 0) {
+
+                    cal.set(Calendar.HOUR_OF_DAY, 0);
+                    cal.set(Calendar.MINUTE, 0);
+                    cal.set(Calendar.SECOND, 0);
+                    cal.set(Calendar.MILLISECOND, 0);
+
+                    // set x from 12am to 12am of next day
+                    min = cal.getTime();
+                    cal.add(Calendar.DAY_OF_MONTH, 1);
+                    max = cal.getTime();
+                    final DateFormat dayFormat = new SimpleDateFormat("h a");
+                    graph.getGridLabelRenderer().setLabelFormatter(new DefaultLabelFormatter() {
+                        @Override
+                        public String formatLabel(double value, boolean isValueX) {
+                            if (isValueX) {
+                                return dayFormat.format(new Date((long) value));
+                            } else {
+                                return super.formatLabel(value, isValueX);
+                            }
+                        }
+                    });
+                    // todo only works for 2 labels
+                    graph.getGridLabelRenderer().setNumHorizontalLabels(2);
+                }
+                // week view
+                else if (i == 1) {
+
+                    cal.set(Calendar.DAY_OF_WEEK, cal.getFirstDayOfWeek());
+                    min = cal.getTime();
+                    cal.add(Calendar.WEEK_OF_YEAR, 1);
+                    max = cal.getTime();
+                    final DateFormat weekFormat = new SimpleDateFormat("E");
+                    graph.getGridLabelRenderer().setLabelFormatter(new DefaultLabelFormatter() {
+                        @Override
+                        public String formatLabel(double value, boolean isValueX) {
+                            if (isValueX) {
+                                return weekFormat.format(new Date((long) value));
+                            } else {
+                                return super.formatLabel(value, isValueX);
+                            }
+                        }
+                    });
+                    graph.getGridLabelRenderer().setNumHorizontalLabels(7);
+                }
+                // month view
+                else {
+                    Log.i("month", "month");
+
+                    cal.set(Calendar.DAY_OF_MONTH, 1);
+                    min = cal.getTime();
+                    cal.add(Calendar.MONTH, 1);
+                    max = cal.getTime();
+                    final DateFormat monthFormat = new SimpleDateFormat("d");
+                    graph.getGridLabelRenderer().setLabelFormatter(new DefaultLabelFormatter() {
+                        @Override
+                        public String formatLabel(double value, boolean isValueX) {
+                            if (isValueX) {
+                                return monthFormat.format(new Date((long) value));
+                            } else {
+                                return super.formatLabel(value, isValueX);
+                            }
+                        }
+                    });
+                    graph.getGridLabelRenderer().setNumHorizontalLabels(31);
+                }
+
+                // format graph
+                graph.getViewport().setXAxisBoundsManual(true);
+                graph.getGridLabelRenderer().setHumanRounding(false);
+                graph.getViewport().setMinX(min.getTime());
+                graph.getViewport().setMaxX(max.getTime());
+                graph.getGridLabelRenderer().invalidate(true, false);
+                graph.refreshDrawableState();
+                graph.invalidate();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+                graph.getGridLabelRenderer().invalidate(true, false);
+                graph.invalidate();
+            }
+        });
+
         // add series to the graph
         graph.addSeries(series);
 
+        // format series appearance
+        series.setColor(Color.rgb(84, 199, 128));
+        series.setDrawDataPoints(true);
+        series.setDataPointsRadius(10);
+        series.setDrawBackground(true);
+        series.setBackgroundColor(Color.argb(127, 101, 240, 154));
 
-        // FORMATTING
-        // set x and y axis size
-        graph.getViewport().setYAxisBoundsManual(true);
-        graph.getViewport().setMinY(0);
-        graph.getViewport().setMaxY(150);
+        // format graph labels
+        final DateFormat dayFormat = new SimpleDateFormat("h a");
+        graph.getGridLabelRenderer().setLabelFormatter(new DefaultLabelFormatter() {
+            @Override
+            public String formatLabel(double value, boolean isValueX) {
+                if (isValueX) {
+                    return dayFormat.format(new Date((long) value));
+                } else {
+                    return super.formatLabel(value, isValueX);
+                }
+            }
+        });
+
+        // create boundaries for graph - 12am to 12am of next day
+        final Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        Date min = cal.getTime();
+        cal.add(Calendar.DAY_OF_MONTH, 1);
+        Date max = cal.getTime();
 
         graph.getViewport().setXAxisBoundsManual(true);
-        graph.getViewport().setMinX(0);
-        graph.getViewport().setMaxX(10);
+        graph.getGridLabelRenderer().setHumanRounding(false);
+        graph.getViewport().setMinX(min.getTime());
+        graph.getViewport().setMaxX(max.getTime());
+        graph.getGridLabelRenderer().setNumHorizontalLabels(2);
 
-        // enable scaling and scrolling
-        graph.getViewport().setScalable(true);
-        graph.getViewport().setScalableY(true);
+        // set y axis size
+        graph.getViewport().setYAxisBoundsManual(true);
+        graph.getViewport().setMinY(0);
+        // todo adjust so that it zooms out when higher number is added
+        graph.getViewport().setMaxY(150);
+        graph.getGridLabelRenderer().setNumVerticalLabels(7);
+        graph.getViewport().setScrollable(false);
+
+        // graph title
+        graph.setTitle("Blood Glucose Levels");
 
         return view;
     }
