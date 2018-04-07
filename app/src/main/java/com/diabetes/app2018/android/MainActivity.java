@@ -1,208 +1,121 @@
 package com.diabetes.app2018.android;
 
-import android.app.Activity;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
-import android.view.KeyEvent;
+import android.view.MenuItem;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.jjoe64.graphview.GraphView;
-import com.jjoe64.graphview.series.PointsGraphSeries;
-
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    // View
-    private EditText xEntry;
-    private EditText yEntry;
-    private Button addButton;
-    private Button resetButton;
-    private Button settingsButton;
-    private GraphView graph;
-    private Button signOutButton;
+    // drawer
+    private DrawerLayout mDrawerLayout;
+    private ListView mDrawerList;
+    private ArrayAdapter mDrawerAdapter;
+    private ActionBarDrawerToggle mDrawerToggle;
+    private String[] mStringOfPages;
+    private CharSequence mDrawerTitle;
+    private CharSequence mTitle;
 
-    private PointsGraphSeries<Point> series = new PointsGraphSeries<>();
-    private List<Point> data = new LinkedList<>();
-    // high glucose level - user will get notification
-    private double glucoseHigh = 130;
-
-    private String errorMessage = "entry must be numeric";
     private Context mContext;
-
-    // Firebase
-    private DatabaseReference database;
-    private String username;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        database = FirebaseDatabase.getInstance().getReference();
-        username = "Penn";
-
         mContext = this;
-        final Activity activity = (Activity) mContext;
 
-        // find the views
-        graph = (GraphView) findViewById(R.id.graph_view);
-        xEntry = (EditText) findViewById(R.id.x_entry);
-        setCloseEditTextOnEnter(xEntry);
-        yEntry = (EditText) findViewById(R.id.y_entry);
-        setCloseEditTextOnEnter(yEntry);
-        addButton = (Button) findViewById(R.id.add_button);
-        settingsButton = (Button) findViewById(R.id.settings_button);
-        signOutButton = (Button) findViewById(R.id.sign_out_button);
-        signOutButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerList = (ListView) findViewById(R.id.left_drawer);
+
+        // set up drawer
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+        mStringOfPages = getResources().getStringArray(R.array.drawer_pages_array);
+        mDrawerAdapter = new ArrayAdapter<String>(this, R.layout.drawer_list_item, mStringOfPages);
+        mDrawerList.setAdapter(mDrawerAdapter);
+        mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
+
+        mTitle = mDrawerTitle = getTitle();
+        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
+                R.string.navigation_drawer_open, R.string.navigation_drawer_close) {
+            public void onDrawerClosed(View view) {
+                getSupportActionBar().setTitle(mTitle);
+                invalidateOptionsMenu();
+            }
+
+            public void onDrawerOpened(View drawerView) {
+                getSupportActionBar().setTitle(mDrawerTitle);
+                invalidateOptionsMenu();
+            }
+        };
+        mDrawerLayout.addDrawerListener(mDrawerToggle);
+        // start in main fragment
+        getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, new MainFragment()).commit();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+
+    private class DrawerItemClickListener implements ListView.OnItemClickListener {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            // go to correct fragment based on tab selected
+            // home
+            if (position == 0) {
+                getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, new MainFragment()).commit();
+            }
+            // awards
+            else if (position == 1) {
+                getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, new AwardsFragment()).commit();
+            }
+            // settings
+            else if (position == 2) {
+                getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, new SettingsFragment()).commit();
+            }
+            // logout
+            else {
                 FirebaseAuth.getInstance().signOut();
                 Intent intent = new Intent(mContext, LoginActivity.class);
                 startActivity(intent);
             }
-        });
-
-        settingsButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent i = new Intent(mContext, SettingsActivity.class);
-                startActivity(i);
-            }
-        });
-
-        // handle adding new data points
-        addButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                // get x and y values from edit text
-                double x;
-                try {
-                    x = Double.parseDouble(xEntry.getText().toString());
-                } catch (NumberFormatException e) {
-                    Toast.makeText(mContext, errorMessage, Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                double y;
-                try {
-                    y = Double.parseDouble(yEntry.getText().toString());
-                } catch (NumberFormatException e) {
-                    Toast.makeText(mContext, errorMessage, Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                data.add(new Point(x, y));
-                database.child("users").child(username).setValue(x + ", " + y);
-
-                Point[] dataArr = new Point[data.size()];
-                dataArr = data.toArray(dataArr);
-                if (dataArr.length > 1) {
-                    Arrays.sort(dataArr);
-                }
-                series.resetData(dataArr);
-                xEntry.setText("");
-                yEntry.setText("");
-
-                // create notification if glucose is too high
-                if (y >= glucoseHigh) {
-                    createNotification();
-                }
-            }
-        });
-
-        resetButton = (Button) findViewById(R.id.reset_button);
-        resetButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // reset data with empty array
-                series.resetData(new Point[0]);
-                data.clear();
-                xEntry.setText("");
-                yEntry.setText("");
-            }
-        });
-
-        // add series to the graph
-        graph.addSeries(series);
-
-
-        // FORMATTING
-        // set x and y axis size
-        graph.getViewport().setYAxisBoundsManual(true);
-        graph.getViewport().setMinY(0);
-        graph.getViewport().setMaxY(150);
-
-        graph.getViewport().setXAxisBoundsManual(true);
-        graph.getViewport().setMinX(0);
-        graph.getViewport().setMaxX(10);
-
-        // enable scaling and scrolling
-        graph.getViewport().setScalable(true);
-        graph.getViewport().setScalableY(true);
+            mDrawerList.setItemChecked(position, true);
+            setTitle(mStringOfPages[position]);
+            mDrawerLayout.closeDrawer(mDrawerList);
+        }
     }
 
-    // notification for when glucose is too high
-    private void createNotification() {
-
-        // create notification
-        Notification.Builder mBuilder =
-                new Notification.Builder(this)
-                        .setSmallIcon(R.drawable.error)
-                        .setContentTitle(getResources().getString(R.string.notification_title))
-                        .setContentText(getResources().getString(R.string.notification_message));
-
-        // add vibration
-        mBuilder.setVibrate(new long[]{1000, 1000, 1000, 1000, 1000});
-
-        // opening notification goes to MainActivity
-        Intent intent = new Intent(this, MainActivity.class);
-
-        PendingIntent pendingIntent =
-                PendingIntent.getActivity(
-                        this,
-                        0,
-                        intent,
-                        PendingIntent.FLAG_UPDATE_CURRENT
-                );
-
-        // associate notification builder with pending intent
-        mBuilder.setContentIntent(pendingIntent);
-
-        // build notification
-        int mNotificationId = 1;
-        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        notificationManager.notify(mNotificationId, mBuilder.build());
+    @Override
+    public void setTitle(CharSequence title) {
+        mTitle = title;
+        getSupportActionBar().setTitle(mTitle);
     }
 
-    // allows keyboard to close when enter is pressed
-    private void setCloseEditTextOnEnter(EditText editText) {
-        editText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        mDrawerToggle.syncState();
+    }
 
-            @Override
-            public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
-                if (keyEvent != null && textView != null && (keyEvent.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
-                    InputMethodManager in = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                    in.hideSoftInputFromWindow(textView.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
-                    return true;
-                }
-                return false;
-            }
-        });
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mDrawerToggle.onConfigurationChanged(newConfig);
     }
 }

@@ -4,16 +4,6 @@
     android:layout_height="match_parent"
     android:padding="16dp">
 
-    <ToggleButton
-        android:id="@+id/toggleButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginBottom="116dp"
-        android:text="ToggleButton" />
-
     <EditText
         android:id="@+id/etTelNr"
         android:layout_width="wrap_content"
@@ -48,4 +38,3 @@
         android:text="Send Message" />
 
 </RelativeLayout>
-
