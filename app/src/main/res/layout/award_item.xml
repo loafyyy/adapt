@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="@dimen/award_size_width"
+    android:layout_height="@dimen/award_size_height"
+    android:layout_margin="16dp">
+
+    <ImageView
+        android:id="@+id/award_image"
+        android:layout_width="@dimen/award_size_image"
+        android:layout_height="@dimen/award_size_image"
+        android:layout_centerHorizontal="true"
+        android:layout_margin="8dp"
+        android:scaleType="centerCrop" />
+
+    <TextView
+        android:id="@+id/award_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/award_image"
+        android:layout_centerHorizontal="true"
+        android:textSize="18sp"
+        tools:text="award name" />
+
+    <TextView
+        android:id="@+id/award_description"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/award_name"
+        android:layout_centerHorizontal="true"
+        tools:text="description" />
+
+</RelativeLayout>

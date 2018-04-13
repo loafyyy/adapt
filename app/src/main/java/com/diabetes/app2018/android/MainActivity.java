@@ -1,6 +1,7 @@
 package com.diabetes.app2018.android;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
@@ -11,6 +12,8 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+
+import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -77,6 +80,27 @@ public class MainActivity extends AppCompatActivity {
             if (position == 0) {
                 getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, new MainFragment()).commit();
             }
+            // health
+            else if (position == 1) {
+                getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, new HealthFragment()).commit();
+            }
+            // awards
+            else if (position == 2) {
+                getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, new AwardsFragment()).commit();
+            }
+            // settings
+            else if (position == 3) {
+                getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, new SettingsFragment()).commit();
+            }
+            // logout
+            else {
+                FirebaseAuth.getInstance().signOut();
+                Intent intent = new Intent(mContext, LoginActivity.class);
+                startActivity(intent);
+            }
+            mDrawerList.setItemChecked(position, true);
+            setTitle(mStringOfPages[position]);
+            mDrawerLayout.closeDrawer(mDrawerList);
         }
     }
 

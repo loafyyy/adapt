@@ -8,11 +8,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,8 +26,11 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.jjoe64.graphview.DefaultLabelFormatter;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
@@ -88,10 +91,12 @@ public class MainFragment extends Fragment {
     // Firebase
     private DatabaseReference database;
     private String username;
+    private boolean dataLoaded;
 
     // Important
     private Context mContext;
     private MainActivity mainActivity;
+    private SharedPreferences sp;
 
     public MainFragment() {
 
@@ -103,6 +108,7 @@ public class MainFragment extends Fragment {
 
         mContext = getActivity();
         mainActivity = (MainActivity) getActivity();
+        sp = mContext.getSharedPreferences(mContext.getString(R.string.pref), Context.MODE_PRIVATE);
 
         // set up broadcast receiver
         bManager = LocalBroadcastManager.getInstance(mContext);
@@ -111,7 +117,33 @@ public class MainFragment extends Fragment {
         bManager.registerReceiver(bReceiver, intentFilter);
 
         database = FirebaseDatabase.getInstance().getReference();
-        username = "Penn";
+        username = sp.getString(mContext.getString(R.string.pref_user), "");
+
+        dataLoaded = false;
+        database.child("users").child(username).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                if (!dataLoaded) {
+                    // iterate through all graphpoints
+                    for (DataSnapshot noteDataSnapshot : dataSnapshot.getChildren()) {
+
+                        GraphPoint point = noteDataSnapshot.getValue(GraphPoint.class);
+                        data.add(new DataPoint(point.getDate(), point.getY()));
+                    }
+
+                    DataPoint[] dataArr = new DataPoint[data.size()];
+                    dataArr = data.toArray(dataArr);
+                    series.resetData(dataArr);
+                    dataLoaded = true;
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
     @Override
@@ -178,6 +210,8 @@ public class MainFragment extends Fragment {
                     return;
                 }
 
+                int size = data.size();
+
                 // add data point to graph
                 data.add(new DataPoint(x, y));
                 DataPoint[] dataArr = new DataPoint[data.size()];
@@ -189,6 +223,10 @@ public class MainFragment extends Fragment {
                 if (y >= glucoseHigh) {
                     createNotification();
                 }
+
+                // write data to database
+                GraphPoint graphPoint = new GraphPoint(x, y, "note");
+                database.child("users").child(username).child(Integer.toString(size)).setValue(graphPoint);
             }
         });
 
@@ -196,6 +234,11 @@ public class MainFragment extends Fragment {
         resetButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // clear database values
+                for (int i = 0; i < data.size(); i++) {
+                    database.child("users").child(username).child(Integer.toString(i)).removeValue();
+                }
+
                 // reset data with empty array
                 series.resetData(new Point[0]);
                 data.clear();
@@ -268,8 +311,6 @@ public class MainFragment extends Fragment {
                 }
                 // month view
                 else {
-                    Log.i("month", "month");
-
                     cal.set(Calendar.DAY_OF_MONTH, 1);
                     min = cal.getTime();
                     cal.add(Calendar.MONTH, 1);

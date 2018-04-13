@@ -3,6 +3,7 @@ package com.diabetes.app2018.android;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -27,9 +28,10 @@ public class LoginActivity extends AppCompatActivity {
     private EditText passwordEntry;
     private Button signInButton;
     private Button signUpButton;
-
     private String email;
     private String password;
+
+    private SharedPreferences sp;
 
     // Firebase Authentication
     private FirebaseAuth mAuth;
@@ -47,6 +49,10 @@ public class LoginActivity extends AppCompatActivity {
     // if user logs in successfully go to Main Activity
     private void updateUI(FirebaseUser user) {
         if (user != null) {
+            // remember username
+            SharedPreferences.Editor editor = sp.edit();
+            editor.putString(getResources().getString(R.string.pref_user), user.getUid());
+            editor.apply();
             Intent intent = new Intent(mContext, MainActivity.class);
             startActivity(intent);
         }
@@ -76,6 +82,7 @@ public class LoginActivity extends AppCompatActivity {
 
         mContext = this;
         mAuth = FirebaseAuth.getInstance();
+        sp = getSharedPreferences(getResources().getString(R.string.pref), MODE_PRIVATE);
 
         emailEntry = (EditText) findViewById(R.id.email_entry);
         setCloseEditTextOnEnter(emailEntry);

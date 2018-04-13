@@ -11,10 +11,16 @@
     <string name="title_activity_login">LoginActivity</string>
     <string-array name="drawer_pages_array">
         <item>Home</item>
-        <item>Achievements</item>
+        <item>Health</item>
+        <item>Awards</item>
         <item>Settings</item>
         <item>Logout</item>
     </string-array>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="pref_user">username</string>
+    <string name="pref">app_preferences</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
