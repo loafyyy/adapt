@@ -2,10 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://C:\Users\Aditya Hota\Documents\GitHub\graph-demo\GraphTest.iml" filepath="C:\Users\Aditya Hota\Documents\GitHub\graph-demo\GraphTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://C:\Users\Aditya Hota\Documents\GitHub\graph-demo\app\app.iml" filepath="C:\Users\Aditya Hota\Documents\GitHub\graph-demo\app\app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/graph-demo.iml" filepath="$PROJECT_DIR$/graph-demo.iml" />
+      <module fileurl="file://$PROJECT_DIR$/diabetes-app.iml" filepath="$PROJECT_DIR$/diabetes-app.iml" />
     </modules>
   </component>
 </project>
