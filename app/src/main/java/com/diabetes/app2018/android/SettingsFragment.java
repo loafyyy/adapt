@@ -26,6 +26,9 @@ public class SettingsFragment extends Fragment {
 
     private EditText etMessage;
     private EditText etTelNr;
+    private EditText etName;
+    private EditText etAge;
+    private EditText etWeight;
     private Button smsButton;
 
     private Context mContext;
@@ -45,7 +48,7 @@ public class SettingsFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mContext = getActivity();
+        mContext = getContext();
         mainActivity = (MainActivity) getActivity();
     }
 
@@ -58,6 +61,9 @@ public class SettingsFragment extends Fragment {
         smsButton = (Button) view.findViewById(R.id.sendSMS);
         etMessage = (EditText) view.findViewById(R.id.etMessage);
         etTelNr = (EditText) view.findViewById(R.id.etTelNr);
+        etName = (EditText) view.findViewById(R.id.etName);
+        etAge = (EditText) view.findViewById(R.id.etAge);
+        etWeight = (EditText) view.findViewById(R.id.etWeight);
 
         sentPI = PendingIntent.getBroadcast(mContext, 0, new Intent(SENT), 0);
         deliveredPI = PendingIntent.getBroadcast(mContext, 0, new Intent(DELIVERED), 0);
@@ -67,7 +73,9 @@ public class SettingsFragment extends Fragment {
             public void onClick(View view) {
                 String message = etMessage.getText().toString();
                 String telNr = etTelNr.getText().toString();
-
+                String name = etName.getText().toString();
+                String age = etAge.getText().toString();
+                String weight = etWeight.getText().toString();
                 if (ContextCompat.checkSelfPermission(mContext, android.Manifest.permission.SEND_SMS)
                         != PackageManager.PERMISSION_GRANTED) {
                     ActivityCompat.requestPermissions(mainActivity, new String[]{android.Manifest.permission.SEND_SMS},

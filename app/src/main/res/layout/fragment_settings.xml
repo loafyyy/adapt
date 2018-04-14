@@ -37,4 +37,39 @@
         android:layout_marginTop="16dp"
         android:text="Send Message" />
 
+    <EditText
+        android:id="@+id/etName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:ems="10"
+        android:inputType="textShortMessage"
+        android:text="What is your name?" />
+
+    <EditText
+        android:id="@+id/etAge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/etName"
+        android:layout_alignStart="@+id/etName"
+        android:layout_below="@+id/etName"
+        android:layout_marginTop="11dp"
+        android:ems="10"
+        android:inputType="textShortMessage"
+        android:text="How old are you?" />
+
+    <EditText
+        android:id="@+id/etWeight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/etAge"
+        android:layout_alignStart="@+id/etAge"
+        android:layout_below="@+id/etAge"
+        android:layout_marginTop="11dp"
+        android:ems="10"
+        android:inputType="textShortMessage"
+        android:text="How much do you weigh?" />
+
 </RelativeLayout>
