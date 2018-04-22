@@ -3,21 +3,32 @@
     android:layout_height="match_parent"
     android:padding="8dp">
 
-    <TextView
-        android:id="@+id/graph_title"
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:text="@string/graph_title"
-        android:textSize="20sp" />
+        android:id="@+id/title_bar">
+
+        <TextView
+            android:id="@+id/graph_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:text="@string/graph_title"
+            android:textSize="20sp" />
+
+        <Spinner
+            android:id="@+id/time_spinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"/>
+    </RelativeLayout>
 
     <com.jjoe64.graphview.GraphView
         android:id="@+id/graph_view"
         android:layout_width="match_parent"
         android:layout_height="200dp"
-        android:layout_below="@+id/graph_title"
+        android:layout_below="@+id/title_bar"
         android:layout_margin="8dp" />
-
 
     <LinearLayout
         android:id="@+id/linear_layout_1"
@@ -26,62 +37,31 @@
         android:layout_below="@id/graph_view"
         android:orientation="horizontal">
 
-        <!-- todo allow custom times -->
-        <EditText
-            android:id="@+id/x_entry"
-            android:layout_width="50dp"
-            android:layout_height="wrap_content" />
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp">
 
-        <TextView
-            android:id="@+id/y_text_view"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/y"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <EditText
-            android:id="@+id/y_entry"
-            android:layout_width="50dp"
-            android:layout_height="wrap_content"
-            android:digits="1234567890.-"
-            android:imeOptions="actionDone"
-            android:inputType="phone"
-            android:maxLength="4" />
-
-        <Button
-            android:id="@+id/add_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/add" />
-
-        <Button
-            android:id="@+id/reset_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/reset" />
+            <Button
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/reset_button"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentRight="true"
+                android:text="@string/reset" />
+        </RelativeLayout>
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/linear_layout_2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/linear_layout_1"
-        android:layout_marginLeft="16dp"
-        android:gravity="center_horizontal"
-        android:orientation="horizontal">
-
-        <Spinner
-            android:id="@+id/time_spinner"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-    </LinearLayout>
+    <Space
+        android:id="@+id/pedo_spacer"
+        android:layout_width="10dp"
+        android:layout_height="30dp"
+        android:layout_below="@id/linear_layout_1"/>
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/linear_layout_2"
+        android:layout_below="@id/pedo_spacer"
         android:orientation="vertical">
 
         <Button
@@ -103,4 +83,11 @@
             android:text="0" />
     </LinearLayout>
 
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/add_fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"/>
 </RelativeLayout>

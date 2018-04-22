@@ -1,16 +1,21 @@
 package com.diabetes.app2018.android;
 
 import android.app.ActivityManager;
+import android.app.AlertDialog;
+import android.app.DatePickerDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.TimePickerDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.view.KeyEvent;
@@ -21,9 +26,12 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
@@ -48,14 +56,12 @@ import java.util.List;
 public class MainFragment extends Fragment {
 
     // Views
-    private EditText xEntry;
-    private EditText yEntry;
-    private Button addButton;
     private Button resetButton;
     private GraphView graph;
     private TextView stepsTV;
     private Button stepsButton;
     private Spinner timeSpinner;
+    private FloatingActionButton fab;
 
     // BroadcastReceiver for PedometerService
     public static final String RECEIVE_SERVICE = "com.diabetes.app2018.android.RECEIVE_SERVICE";
@@ -98,9 +104,7 @@ public class MainFragment extends Fragment {
     private MainActivity mainActivity;
     private SharedPreferences sp;
 
-    public MainFragment() {
-
-    }
+    public MainFragment() {    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -176,59 +180,6 @@ public class MainFragment extends Fragment {
 
         timeSpinner = (Spinner) view.findViewById(R.id.time_spinner);
         graph = (GraphView) view.findViewById(R.id.graph_view);
-        xEntry = (EditText) view.findViewById(R.id.x_entry);
-        setCloseEditTextOnEnter(xEntry);
-        yEntry = (EditText) view.findViewById(R.id.y_entry);
-        setCloseEditTextOnEnter(yEntry);
-        addButton = (Button) view.findViewById(R.id.add_button);
-
-        // handle adding new data points
-        addButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                // get x and y values from edit text
-                /* todo: custom x/time values
-                double x;
-                try {
-                    x = Double.parseDouble(xEntry.getText().toString());
-                } catch (NumberFormatException e) {
-                    Toast.makeText(mContext, errorMessage, Toast.LENGTH_SHORT).show();
-                    return;
-                }*/
-
-                // get x value as a date
-                Calendar curr = Calendar.getInstance();
-                Date x = curr.getTime();
-
-                // get y value
-                double y;
-                try {
-                    y = Double.parseDouble(yEntry.getText().toString());
-                } catch (NumberFormatException e) {
-                    Toast.makeText(mContext, errorMessage, Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                int size = data.size();
-
-                // add data point to graph
-                data.add(new DataPoint(x, y));
-                DataPoint[] dataArr = new DataPoint[data.size()];
-                dataArr = data.toArray(dataArr);
-                series.resetData(dataArr);
-                yEntry.setText("");
-
-                // create notification if glucose is too high
-                if (y >= glucoseHigh) {
-                    createNotification();
-                }
-
-                // write data to database
-                GraphPoint graphPoint = new GraphPoint(x, y, "note");
-                database.child("users").child(username).child(Integer.toString(size)).setValue(graphPoint);
-            }
-        });
 
         resetButton = (Button) view.findViewById(R.id.reset_button);
         resetButton.setOnClickListener(new View.OnClickListener() {
@@ -242,8 +193,14 @@ public class MainFragment extends Fragment {
                 // reset data with empty array
                 series.resetData(new Point[0]);
                 data.clear();
-                xEntry.setText("");
-                yEntry.setText("");
+            }
+        });
+
+        fab = (FloatingActionButton) view.findViewById(R.id.add_fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                manageUserInput(graph);
             }
         });
 
@@ -394,7 +351,7 @@ public class MainFragment extends Fragment {
         graph.getViewport().setScrollable(false);
 
         // graph title
-        graph.setTitle("Blood Glucose Levels");
+        //graph.setTitle("Blood Glucose Levels");
 
         return view;
     }
@@ -463,5 +420,130 @@ public class MainFragment extends Fragment {
         Intent intent = new Intent(mContext, PedometerService.class);
         mContext.stopService(intent);
         // todo save number of steps
+    }
+
+    private void manageUserInput(final GraphView graph) {
+        LayoutInflater layoutInflater = LayoutInflater.from(mContext);
+        View promptView = layoutInflater.inflate(R.layout.add_glucose_dialog, null);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(mContext);
+        alertDialogBuilder.setView(promptView);
+
+        final Button btnDatePicker, btnTimePicker;
+        final TextView txtDate, txtTime;
+        final Calendar add_cal = Calendar.getInstance();
+
+        final EditText glucoseInputEditText = (EditText) promptView.findViewById(R.id.glucose_input_value);
+        btnDatePicker = (Button) promptView.findViewById(R.id.select_date_button);
+        btnTimePicker = (Button) promptView.findViewById(R.id.select_time_button);
+        txtDate = (TextView) promptView.findViewById(R.id.date_text_view);
+        txtTime = (TextView) promptView.findViewById(R.id.time_text_view);
+
+        btnDatePicker.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final int mYear, mMonth, mDay, mHour, mMinute;
+
+                // Get Current Date
+                final Calendar c = Calendar.getInstance();
+                mYear = c.get(Calendar.YEAR);
+                mMonth = c.get(Calendar.MONTH);
+                mDay = c.get(Calendar.DAY_OF_MONTH);
+
+                DatePickerDialog datePickerDialog = new DatePickerDialog(mContext,
+                        new DatePickerDialog.OnDateSetListener() {
+                            @Override
+                            public void onDateSet(DatePicker datePicker, int year, int monthOfYear,
+                                                  int dayOfMonth) {
+                                txtDate.setText((monthOfYear + 1) + "/" + dayOfMonth + "/" + year);
+
+                                //Update add calendar values
+                                add_cal.set(Calendar.YEAR, year);
+                                add_cal.set(Calendar.MONTH, monthOfYear);
+                                add_cal.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                            }
+                        }, mYear, mMonth, mDay);
+                datePickerDialog.show();
+            }
+        });
+
+        btnTimePicker.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final int mHour, mMinute;
+
+                //Get Current Date
+                final Calendar c = Calendar.getInstance();
+                mHour = c.get(Calendar.HOUR_OF_DAY);
+                mMinute = c.get(Calendar.MINUTE);
+
+                TimePickerDialog timePickerDialog = new TimePickerDialog(mContext,
+                        new TimePickerDialog.OnTimeSetListener() {
+                            @Override
+                            public void onTimeSet(TimePicker timePicker, int hourOfDay, int minute) {
+                                if (hourOfDay <= 12) {
+                                    if (minute < 10) {
+                                        txtTime.setText(hourOfDay + ":" + "0" + minute + "AM");
+                                    }
+                                    else {
+                                        txtTime.setText(hourOfDay + ":" + minute + " AM");
+                                    }
+
+                                }
+                                else {
+                                    if (minute < 10) {
+                                        txtTime.setText((hourOfDay - 12) + ":" + "0" + minute + " PM");
+                                    }
+                                    else {
+                                        txtTime.setText((hourOfDay - 12) + ":" + minute + " PM");
+                                    }
+                                }
+
+                                //Update add calendar values
+                                add_cal.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                                add_cal.set(Calendar.MINUTE, minute);
+                            }
+                        }, mHour, mMinute, false);
+                timePickerDialog.show();
+            }
+        });
+
+        alertDialogBuilder.setCancelable(true)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        int glucoseLevel = 0;
+                        try {
+                            glucoseLevel = Integer.parseInt(glucoseInputEditText.getText().toString());
+                            appendGraph(graph, add_cal.getTime(), glucoseLevel);
+                        }
+                        catch (NumberFormatException e) {
+                            Toast.makeText(mContext, "Glucose value must be a number", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                })
+                .setNegativeButton("Cancel",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                dialogInterface.cancel();
+                            }
+                        });
+
+        AlertDialog alert = alertDialogBuilder.create();
+        alert.show();
+    }
+
+    private void appendGraph(GraphView graph, Date date, int glucoseLevel) {
+        //Add data point to graph
+        data.add(new DataPoint(date, glucoseLevel));
+        DataPoint[] dataArr = new DataPoint[data.size()];
+
+        //TODO: sort data array before adding to graph
+        dataArr = data.toArray(dataArr);
+        series.resetData(dataArr);
+
+        //Write to database
+        GraphPoint graphPoint = new GraphPoint(date, glucoseLevel, "note");
+        database.child("users").child(username).child(Integer.toString(data.size())).setValue(graphPoint);
     }
 }
